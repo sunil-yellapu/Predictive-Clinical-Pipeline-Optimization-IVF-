@@ -1,6 +1,4 @@
-# ============================================
 # IVF BLASTOCYST FORMATION PREDICTION – STREAMLIT
-# ============================================
 
 import streamlit as st
 import pandas as pd
@@ -8,9 +6,9 @@ import numpy as np
 import joblib
 from sklearn.base import BaseEstimator, TransformerMixin
 
-# -----------------------------
-# Custom Transformer (REQUIRED)
-# -----------------------------
+
+# Custom Transformer:
+
 class IVFDomainFeatureEngineer(BaseEstimator, TransformerMixin):
     def fit(self, X, y=None):
         return self
@@ -42,9 +40,9 @@ class IVFDomainFeatureEngineer(BaseEstimator, TransformerMixin):
 
         return X.drop(columns=DROP_COLS, errors="ignore")
 
-# -----------------------------
+
 # Load Model Bundle
-# -----------------------------
+
 @st.cache_resource
 def load_bundle():
     bundle = joblib.load("ivf_model_bundle.pkl")
@@ -55,23 +53,21 @@ model = bundle["pipeline"]
 EXPECTED_COLS = bundle["feature_columns"]
 THRESHOLD = bundle["threshold"]
 
-# -----------------------------
+
 # Align Features
-# -----------------------------
 def align_features(df):
     return df.reindex(columns=EXPECTED_COLS)
 
-# -----------------------------
+
 # UI
-# -----------------------------
 st.set_page_config(page_title="IVF Blastocyst Prediction", layout="centered")
-st.title("🧬 IVF Blastocyst Formation Prediction")
+st.title("IVF Blastocyst Formation Prediction")
 
-tab1, tab2 = st.tabs(["🧍 Single Patient", "📂 Bulk Upload"])
+tab1, tab2 = st.tabs(["Single Patient", " Bulk Upload"])
 
-# -----------------------------
+
 # SINGLE PATIENT
-# -----------------------------
+
 with tab1:
     st.subheader("Single IVF Cycle")
 
@@ -126,9 +122,8 @@ with tab1:
         st.metric("Blastocyst Probability", f"{prob:.2%}")
         st.success("Likely Formed" if prob >= THRESHOLD else "Not Likely Formed")
 
-# -----------------------------
+
 # BULK UPLOAD
-# -----------------------------
 with tab2:
     st.subheader("Bulk IVF Prediction")
     file = st.file_uploader("Upload CSV / Excel", type=["csv", "xlsx"])
