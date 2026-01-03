@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-This project focuses on predicting **blastocyst formation** using a **data-driven, clinically sensible machine learning approach**. Rather than blindly experimenting with multiple algorithms, the modeling strategy is intentionally **phase-based**, emphasizing understanding, reliability, and biological interpretability.
+This project focuses on predicting **blastocyst formation** using a **data-driven, clinically sensible machine learning approach**. Rather than blindly experimenting with multiple algorithms to achieve accuracy, the modeling strategy is intentionally **phase-based**, emphasizing understanding, reliability, and biological interpretability.
 
 The objective is to arrive at **one robust, well-validated model** that balances performance with trustworthiness—especially critical in a clinical/biological setting.
 
