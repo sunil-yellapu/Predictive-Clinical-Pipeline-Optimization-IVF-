@@ -1,4 +1,4 @@
-# 🧠 Data-Driven Blastocyst Formation Prediction
+#  Data-Driven Blastocyst Formation Prediction
 
 ## Project Overview
 
@@ -7,7 +7,7 @@ This project focuses on predicting **blastocyst formation** using a **data-drive
 The objective is to arrive at **one robust, well-validated model** that balances performance with trustworthiness—especially critical in a clinical/biological setting.
 
 
-## 🎯 Modeling Philosophy
+##  Modeling Philosophy
 
 The core philosophy of this project is **intentional modeling**.
 
@@ -15,14 +15,13 @@ Instead of optimizing everything at once, the approach prioritizes:
 
 * Understanding feature relevance before model complexity
 * Comparing model families systematically
-* Optimizing only what materially improves outcomes
+* Optimizing only the things that improves outcomes
 * Avoiding unnecessary sophistication that reduces interpretability
 
-> **Guiding Principle:** Modeling progresses from *certainty → comparison → optimization → trust*.
-
+> **Guiding Principle:** Modeling progresses from *certainty -> comparison -> optimization -> trust*.
 ---
 
-## 🧩 Modeling Workflow (Phase-Based)
+##  Modeling Workflow (Phase-Based)
 
 ### Phase 1 — Baseline Sanity Check
 
@@ -30,7 +29,7 @@ Instead of optimizing everything at once, the approach prioritizes:
 
 **Approach:**
 
-* Train a simple baseline model (Logistic Regression or shallow Decision Tree)
+* Train a simple baseline model (Logistic Regression or Simple Decision Tree)
 * No hyperparameter tuning
 * Single primary metric (Recall / F1-score)
 
@@ -53,7 +52,7 @@ Instead of optimizing everything at once, the approach prioritizes:
 * Random Forest
 * Gradient Boosting
 * XGBoost / LightGBM
-* (Optional) CatBoost
+* CatBoost(Optional)
 
 **Rules enforced:**
 
@@ -68,7 +67,7 @@ Instead of optimizing everything at once, the approach prioritizes:
 
 ---
 
-### Phase 3 — Deep Optimization (Shortlisted Models Only)
+### Phase 3 — Deep Optimization (Only the  Shortlisted models)
 
 **Objective:** Improve performance without overfitting.
 
@@ -104,7 +103,7 @@ Instead of optimizing everything at once, the approach prioritizes:
 
 ---
 
-### Phase 5 — Final Model Freeze
+### Phase 5 — Final Model Selection and Freezing
 
 **Objective:** Lock a single, production-ready model.
 
@@ -122,7 +121,7 @@ Instead of optimizing everything at once, the approach prioritizes:
 
 ---
 
-## 🚫 What This Project Intentionally Avoids
+##  What This Project Intentionally Avoids
 
 To maintain clarity and robustness, the following practices are deliberately excluded:
 
