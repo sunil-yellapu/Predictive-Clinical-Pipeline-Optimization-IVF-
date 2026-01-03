@@ -1,7 +1,7 @@
-# ============================================
+
 # DATA-DRIVEN BLASTOCYST FORMATION PREDICTION
+
 # TRAIN + SAVE FINAL MODEL (STREAMLIT SAFE)
-# ============================================
 
 import numpy as np
 import pandas as pd
@@ -23,16 +23,39 @@ from sklearn.metrics import (
     accuracy_score
 )
 
-# ------------------
-# Load Data
-# ------------------
-df = pd.read_excel(
-    r"C:\Users\hruth\Desktop\Data–Driven Blastocyst Formation Prediction\Dataset\Blastocyst_Formation_Dataset.xlsx"
+
+# LOAD DATA 
+from sqlalchemy import create_engine
+
+user = "root"
+pw = "XXXXXXXX"
+db = "ivf_db" 
+
+engine = create_engine(
+    f"mysql+pymysql://{user}:{pw}@localhost/{db}"
 )
 
-# ------------------
+df = pd.read_excel( "Blastocyst_Formation_Dataset.xlsx",sheet_name=0)
+
+df.to_sql(
+    name="blastocyst_data",
+    con=engine,
+    if_exists="replace",
+    index=False,
+    chunksize=1000
+)
+
+sql = 'select * from blastocyst_data'
+data = pd.read_sql_query(sql, engine)
+print(type(data))
+df.head(5)
+df.describe()
+df.info()
+
+df = df.copy()
+
 # Target & Leakage
-# ------------------
+
 TARGET_COL = "Blastocyst_Formation_Flag"
 
 LEAKAGE_COLS = [
@@ -52,9 +75,9 @@ LEAKAGE_COLS = [
 y = df[TARGET_COL]
 X = df.drop(columns=[TARGET_COL] + LEAKAGE_COLS, errors="ignore")
 
-# ------------------
+
 # Feature Engineering (SAFE)
-# ------------------
+
 class IVFDomainFeatureEngineer(BaseEstimator, TransformerMixin):
     def fit(self, X, y=None):
         return self
@@ -90,16 +113,15 @@ class IVFDomainFeatureEngineer(BaseEstimator, TransformerMixin):
 
         return X.drop(columns=DROP_COLS, errors="ignore")
 
-# ------------------
+
 # Train-Test Split
-# ------------------
+
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.2, stratify=y, random_state=42
 )
 
-# ------------------
+
 # Preprocessing (STREAMLIT SAFE)
-# ------------------
 preprocessor = ColumnTransformer(
     transformers=[
         (
@@ -123,9 +145,8 @@ preprocessor = ColumnTransformer(
     ]
 )
 
-# ------------------
+
 # Model
-# ------------------
 model = GradientBoostingClassifier(
     n_estimators=300,
     learning_rate=0.05,
@@ -137,23 +158,20 @@ model = GradientBoostingClassifier(
 
 FINAL_THRESHOLD = 0.50
 
-# ------------------
+
 # Pipeline
-# ------------------
 pipeline = Pipeline([
     ("feature_engineering", IVFDomainFeatureEngineer()),
     ("preprocessing", preprocessor),
     ("model", model)
 ])
 
-# ------------------
+
 # Train
-# ------------------
 pipeline.fit(X_train, y_train)
 
-# ------------------
+
 # Evaluation (Optional)
-# ------------------
 y_pred = pipeline.predict(X_test)
 y_prob = pipeline.predict_proba(X_test)[:, 1]
 
@@ -163,9 +181,8 @@ print("Recall:", recall_score(y_test, y_pred))
 print("F1:", f1_score(y_test, y_pred))
 print(classification_report(y_test, y_pred))
 
-# ------------------
+
 # Save EVERYTHING for inference
-# ------------------
 joblib.dump(
     {
         "pipeline": pipeline,
@@ -176,6 +193,4 @@ joblib.dump(
     "ivf_model_bundle.pkl"
 )
 
-print("✅ Model bundle saved successfully")
-import os 
-os.getcwd()
+print("Model bundle saved successfully")
