@@ -2,7 +2,6 @@
 # DATA-DRIVEN BLASTOCYST FORMATION PREDICTION
 
 # TRAIN + SAVE FINAL MODEL
-
 import numpy as np
 import pandas as pd
 import joblib
@@ -55,7 +54,6 @@ df.info()
 df = df.copy()
 
 # Target & Leakage
-
 TARGET_COL = "Blastocyst_Formation_Flag"
 
 LEAKAGE_COLS = [
@@ -76,15 +74,13 @@ y = df[TARGET_COL]
 X = df.drop(columns=[TARGET_COL] + LEAKAGE_COLS, errors="ignore")
 
 
-# Feature Engineering (SAFE)
-
+# Feature Engineering
 class IVFDomainFeatureEngineer(BaseEstimator, TransformerMixin):
     def fit(self, X, y=None):
         return self
 
     def transform(self, X):
         X = X.copy()
-
         # Ensure numeric safety
         num_cols = X.select_dtypes(exclude="object").columns
         X[num_cols] = X[num_cols].apply(pd.to_numeric, errors="coerce")
@@ -115,11 +111,9 @@ class IVFDomainFeatureEngineer(BaseEstimator, TransformerMixin):
 
 
 # Train-Test Split
-
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.2, stratify=y, random_state=42
 )
-
 
 # Preprocessing
 preprocessor = ColumnTransformer(
@@ -169,7 +163,6 @@ pipeline = Pipeline([
 
 # Train
 pipeline.fit(X_train, y_train)
-
 
 # Evaluation (Optional)
 y_pred = pipeline.predict(X_test)
