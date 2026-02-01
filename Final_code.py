@@ -70,19 +70,12 @@ class IVFDomainFeatureEngineer(BaseEstimator, TransformerMixin):
 
 
 # 3. TRAINING LOGIC (Strictly uses your data)
-
 @st.cache_resource
 def train_and_load_model():
-    """
-    Looks for 'Blastocyst_Formation_Dataset.xlsx'. 
-    If found, trains the model and returns the pipeline.
-    If not found, returns None.
-    """
     DATA_FILE = "Blastocyst_Formation_Dataset.xlsx"
     
     if not os.path.exists(DATA_FILE):
         return None
-
     # --- 1. Load Data ---
     try:
         df = pd.read_excel(DATA_FILE, sheet_name=0)
@@ -143,7 +136,6 @@ def train_and_load_model():
 
 
 # 4. INITIALIZE APP & HANDLE MISSING DATA
-
 st.title("IVF Blastocyst Formation Prediction")
 
 bundle = train_and_load_model()
@@ -168,7 +160,6 @@ def align_features(df):
 
 
 # 5. UI TABS
-
 tab1, tab2 = st.tabs(["Single Patient Prediction", "Bulk CSV Upload"])
 
 # --- TAB 1: SINGLE PATIENT ---
