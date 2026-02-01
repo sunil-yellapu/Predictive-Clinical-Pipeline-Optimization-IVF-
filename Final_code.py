@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import joblib
+import os
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer, make_column_selector
@@ -10,9 +11,9 @@ from sklearn.impute import SimpleImputer
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.model_selection import train_test_split
 
+
 # 1. CONFIGURATION & PAGE SETUP
 st.set_page_config(page_title="IVF Blastocyst Prediction", layout="centered")
-
 
 # 2. FEATURE ENGINEERING CLASS (Must be global)
 class IVFDomainFeatureEngineer(BaseEstimator, TransformerMixin):
@@ -28,8 +29,7 @@ class IVFDomainFeatureEngineer(BaseEstimator, TransformerMixin):
         existing_num_cols = [c for c in num_cols if c in X.columns]
         X[existing_num_cols] = X[existing_num_cols].apply(pd.to_numeric, errors="coerce")
 
-        # Feature Creation
-        # We use .get() or checks to ensure columns exist before math to be safe
+        # Feature Creation - using .get() to avoid KeyErrors if cols missing
         if "Sperm_Concentration_million_mL" in X.columns:
             X["Sperm_Concentration_log"] = np.log1p(X["Sperm_Concentration_million_mL"])
         
@@ -69,53 +69,26 @@ class IVFDomainFeatureEngineer(BaseEstimator, TransformerMixin):
         return X.drop(columns=DROP_COLS, errors="ignore")
 
 
-# 3. TRAINING & MODEL LOADING LOGIC
-
-
-def generate_synthetic_data(n_rows=500):
-    """Generates dummy data so the app runs without the original Excel file."""
-    np.random.seed(42)
-    data = {
-        "Female_Age": np.random.randint(20, 45, n_rows),
-        "BMI": np.random.uniform(18, 35, n_rows),
-        "AMH_ng_mL": np.random.uniform(0.1, 10, n_rows),
-        "AFC": np.random.randint(5, 30, n_rows),
-        "Basal_FSH_mIU_mL": np.random.uniform(2, 15, n_rows),
-        "Basal_LH_mIU_mL": np.random.uniform(2, 15, n_rows),
-        "Oocytes_Retrieved": np.random.randint(5, 25, n_rows),
-        "Sperm_Concentration_million_mL": np.random.uniform(10, 150, n_rows),
-        "Day3_Fragmentation_%": np.random.uniform(0, 30, n_rows),
-        "O2_Concentration_%": np.random.normal(5, 0.5, n_rows),
-        "CO2_Concentration_%": np.random.normal(6, 0.5, n_rows),
-        "Insemination_Method": np.random.choice(["IVF", "ICSI"], n_rows),
-        "Infertility_Diagnosis": np.random.choice(
-            ["Male Factor", "PCOS", "Endometriosis", "Tubal", "Unexplained", "Diminished Ovarian Reserve"], 
-            n_rows
-        ),
-        # Target
-        "Blastocyst_Formation_Flag": np.random.choice([0, 1], n_rows)
-    }
-    
-    # Dependent logic for consistency
-    df = pd.DataFrame(data)
-    df["MII_Oocytes"] = df["Oocytes_Retrieved"].apply(lambda x: int(x * 0.8))
-    df["Zygotes_2PN"] = df["MII_Oocytes"].apply(lambda x: int(x * 0.7))
-    df["Day3_Embryos_Total"] = df["Zygotes_2PN"].apply(lambda x: int(x * 0.9))
-    df["Day3_Embryos_Graded"] = df["Day3_Embryos_Total"].apply(lambda x: int(x * 0.8))
-    
-    return df
+# 3. TRAINING LOGIC (Strictly uses your data)
 
 @st.cache_resource
-def get_model_pipeline():
-    """Trains the model if not already cached."""
+def train_and_load_model():
+    """
+    Looks for 'Blastocyst_Formation_Dataset.xlsx'. 
+    If found, trains the model and returns the pipeline.
+    If not found, returns None.
+    """
+    DATA_FILE = "Blastocyst_Formation_Dataset.xlsx"
     
-    # --- 1. Load Data (Synthetic for Demo or Load Real if available) ---
+    if not os.path.exists(DATA_FILE):
+        return None
+
+    # --- 1. Load Data ---
     try:
-        # Try loading real file if user puts it in folder
-        df = pd.read_excel("Blastocyst_Formation_Dataset.xlsx", sheet_name=0)
-    except FileNotFoundError:
-        # Fallback to synthetic data
-        df = generate_synthetic_data()
+        df = pd.read_excel(DATA_FILE, sheet_name=0)
+    except Exception as e:
+        st.error(f"Error reading Excel file: {e}")
+        return None
 
     # --- 2. Prep Data ---
     TARGET_COL = "Blastocyst_Formation_Flag"
@@ -125,6 +98,11 @@ def get_model_pipeline():
         "Implantation_Success", "Patient_ID", "Cycle_ID", "Lab_ID"
     ]
     
+    # Check if target exists
+    if TARGET_COL not in df.columns:
+        st.error(f"Target column '{TARGET_COL}' not found in dataset.")
+        return None
+
     y = df[TARGET_COL]
     X = df.drop(columns=[TARGET_COL] + LEAKAGE_COLS, errors="ignore")
     
@@ -140,7 +118,12 @@ def get_model_pipeline():
     )
 
     model = GradientBoostingClassifier(
-        n_estimators=100, learning_rate=0.05, max_depth=3, random_state=42
+        n_estimators=300, 
+        learning_rate=0.05, 
+        max_depth=3, 
+        min_samples_leaf=20,
+        subsample=0.8,
+        random_state=42
     )
 
     pipeline = Pipeline([
@@ -158,36 +141,39 @@ def get_model_pipeline():
         "threshold": 0.5
     }
 
-# Load the bundle (Trains on first run, caches afterwards)
-bundle = get_model_pipeline()
+
+# 4. INITIALIZE APP & HANDLE MISSING DATA
+
+st.title("IVF Blastocyst Formation Prediction")
+
+bundle = train_and_load_model()
+
+if bundle is None:
+    st.error("❌ **Dataset Not Found**")
+    st.warning("Please place the file `Blastocyst_Formation_Dataset.xlsx` in the same folder as this script and refresh the page.")
+    st.stop()  # Stop execution here if no model
+
+# Load model components if training succeeded
 model = bundle["pipeline"]
 EXPECTED_COLS = bundle["feature_columns"]
 THRESHOLD = bundle["threshold"]
 
 def align_features(df):
-    # Add missing cols with 0/NaN
+    """Aligns input dataframe columns with training data columns."""
     for col in EXPECTED_COLS:
         if col not in df.columns:
-            df[col] = 0 if df[col].dtype != "object" else "Unknown"
+            # Fill missing columns (e.g., missing one-hot categories) with 0
+            df[col] = 0
     return df[EXPECTED_COLS]
 
 
-# 4. STREAMLIT UI
+# 5. UI TABS
 
-st.title("IVF Blastocyst Formation Prediction")
-
-if 'Blastocyst_Formation_Dataset.xlsx' not in [f.name for f in Path('.').iterdir() if f.is_file()]:
-    st.info("ℹ️ Running on Synthetic Training Data (No Excel file found).")
-else:
-    st.success("✅ Model Trained on 'Blastocyst_Formation_Dataset.xlsx'")
-
-from pathlib import Path # Import specifically for the check above
-
-tab1, tab2 = st.tabs(["Single Patient", "Bulk Upload"])
+tab1, tab2 = st.tabs(["Single Patient Prediction", "Bulk CSV Upload"])
 
 # --- TAB 1: SINGLE PATIENT ---
 with tab1:
-    st.subheader("Single IVF Cycle Parameters")
+    st.subheader("Enter IVF Cycle Parameters")
     
     with st.form("single"):
         col1, col2 = st.columns(2)
@@ -217,7 +203,7 @@ with tab1:
             ["Male Factor", "PCOS", "Endometriosis", "Tubal", "Unexplained", "Diminished Ovarian Reserve"]
         )
 
-        submit = st.form_submit_button("Predict Probability")
+        submit = st.form_submit_button("Predict Outcome")
 
     if submit:
         # Create input dataframe
@@ -240,12 +226,12 @@ with tab1:
         prob = model.predict_proba(df_aligned)[0][1]
         
         st.divider()
-        st.metric("Blastocyst Formation Probability", f"{prob:.2%}")
+        st.metric("Blastocyst Probability", f"{prob:.2%}")
         
         if prob >= THRESHOLD:
-            st.success("Result: Likely to Form Blastocyst")
+            st.success("Likely to Form Blastocyst")
         else:
-            st.warning("Result: Less Likely to Form Blastocyst")
+            st.warning("Not Likely to Form Blastocyst")
 
 # --- TAB 2: BULK UPLOAD ---
 with tab2:
@@ -257,19 +243,4 @@ with tab2:
             df_bulk = pd.read_csv(file) if file.name.endswith(".csv") else pd.read_excel(file)
             
             # Align and Predict
-            df_bulk_aligned = align_features(df_bulk)
-            probs = model.predict_proba(df_bulk_aligned)[:, 1]
-            
-            # Append Results
-            df_bulk["Blastocyst_Probability"] = probs
-            df_bulk["Prediction"] = np.where(probs >= THRESHOLD, "Likely", "Not Likely")
-            
-            st.dataframe(df_bulk.head())
-            st.download_button(
-                "Download Predictions", 
-                df_bulk.to_csv(index=False).encode('utf-8'), 
-                "ivf_predictions.csv",
-                "text/csv"
-            )
-        except Exception as e:
-            st.error(f"Error processing file: {e}")
+            df_bulk_aligned = align
