@@ -8,7 +8,6 @@ from sklearn.base import BaseEstimator, TransformerMixin
 
 
 # Custom Transformer:
-
 class IVFDomainFeatureEngineer(BaseEstimator, TransformerMixin):
     def fit(self, X, y=None):
         return self
@@ -42,7 +41,6 @@ class IVFDomainFeatureEngineer(BaseEstimator, TransformerMixin):
 
 
 # Load Model Bundle
-
 @st.cache_resource
 def load_bundle():
     bundle = joblib.load("ivf_model_bundle.pkl")
@@ -67,7 +65,6 @@ tab1, tab2 = st.tabs(["Single Patient", " Bulk Upload"])
 
 
 # SINGLE PATIENT
-
 with tab1:
     st.subheader("Single IVF Cycle")
 
