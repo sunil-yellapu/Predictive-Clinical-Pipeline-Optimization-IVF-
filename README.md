@@ -119,7 +119,7 @@ Instead of optimizing everything at once, the approach prioritizes:
 * Documented assumptions and limitations
 
 ---
-** BUSINESS IMPACT :
+**BUSINESS IMPACT** :
 * Built a phase-based ML pipeline to predict blastocyst formation, progressing from baseline validation to model family comparison and reliability checks.
 
 * Evaluated 6 model families under identical preprocessing and validation strategy; Gradient Boosting achieved the highest performance (F1: 0.80, Recall: 92.4%), minimizing false negatives in clinically critical embryo selection.
