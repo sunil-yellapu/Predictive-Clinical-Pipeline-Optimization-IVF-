@@ -52,7 +52,6 @@ Instead of optimizing everything at once, the approach prioritizes:
 * Random Forest
 * Gradient Boosting
 * XGBoost / LightGBM
-* CatBoost(Optional)
 
 **Rules enforced:**
 
@@ -120,13 +119,13 @@ Instead of optimizing everything at once, the approach prioritizes:
 * Documented assumptions and limitations
 
 ---
+** BUSINESS IMPACT :
+* Built a phase-based ML pipeline to predict blastocyst formation, progressing from baseline validation to model family comparison and reliability checks.
 
-##  What This Project Intentionally Avoids
+* Evaluated 6 model families under identical preprocessing and validation strategy; Gradient Boosting achieved the highest performance (F1: 0.80, Recall: 92.4%), minimizing false negatives in clinically critical embryo selection.
 
-To maintain clarity and robustness, the following practices are deliberately excluded:
+* Improved recall from 61.8% (Decision Tree baseline) to 92.4%, reducing the probability of missing viable embryos by ~30%.
 
-* Dropping features purely based on correlation
-* Aggressive outlier treatment for tree-based models
-* Hyperparameter tuning across all models
-* Accuracy-first optimization
-* Mixing preprocessing logic
+* Conducted structured overfitting analysis (train–validation gap monitoring, ROC-AUC comparison) to ensure generalizable performance rather than accuracy inflation.
+
+* Delivered a frozen, reproducible pipeline with threshold tuning and confusion-matrix–based clinical interpretation, making the system suitable for decision-support deployment.
